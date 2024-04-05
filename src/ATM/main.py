@@ -4,7 +4,7 @@ from ultralytics import YOLO
 import logging
 import os
 from utils import *
-from atm_cleanliness import *
+from src.ATM.atm_cleanliness import *
 from atm_suspecious import *
 from atm_functionality import *
 from dotenv import load_dotenv
