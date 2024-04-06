@@ -49,16 +49,22 @@ def presence_threshold_flag(person_presence, wait_threshould, num_persons):
         return flag 
     else:
         return flag
-    
-def atm_suspecious(results, person_presence_start_time, elapsed_time, wait_threshould): # wait_thresould is in sec
+
+def atm_suspecious(results, person_presence_start_time, elapsed_time, wait_threshould): # wait_threshold is in sec
     time_exceeded_flag = False
     sus_activity = suspecious_cases(results)
     person_presence_start_time, elapsed_time = check_person_duration(sus_activity['num_persons'], person_presence_start_time, elapsed_time)
     time_exceeded_flag = presence_threshold_flag(person_presence_start_time, wait_threshould, num_persons=sus_activity['num_persons']) 
     persons = sus_activity['num_persons']
-    return persons, elapsed_time, {'num_persons_flag': sus_activity['num_persons_flag']
-            ,'time_exceeded_flag': time_exceeded_flag
-            ,'helmet_detected_flag': sus_activity['helmet_detected']}, person_presence_start_time
+    flags = {'num_persons_flag': sus_activity['num_persons_flag'],
+             'time_exceeded_flag': time_exceeded_flag,
+             'helmet_detected_flag': sus_activity['helmet_detected']}
+    
+    suspicious = any(flags.values())    
+
+    suspicious_label = 'SUSPICIOUS' if suspicious else 'NORMAL'
+    
+    return persons, elapsed_time, flags, person_presence_start_time, suspicious_label
 
 
 def main():
@@ -66,6 +72,7 @@ def main():
 
     person_presence_start_time = None
     elapsed_time = None 
+    suspecious = False
 
     VIDEO_NAME = "videos/atm_func.mp4"
     ATM_MODEL = os.getenv('ATM_MODEL')
@@ -83,7 +90,7 @@ def main():
             break
 
         results = process_frame(atm_model, frame, conf=0.8)[0]
-        persons, elapsed_time, all_sus_flags, person_presence_start_time = atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) # wait_thresould is in sec
+        persons, elapsed_time, all_sus_flags, person_presence_start_time, suspecious= atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) # wait_thresould is in sec
 
         # sus_activity = suspecious_cases(results)
         # person_presence, elapsed_time= check_person_duration(sus_activity['num_persons'], person_presence, elapsed_time)
@@ -96,6 +103,7 @@ def main():
         cv2.putText(frame, f"No of Persons Flag: {all_sus_flags['num_persons_flag']}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Start Time: {person_presence_start_time}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Person Time Excedded: {all_sus_flags['time_exceeded_flag']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"suspecious: {suspecious}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
 
         
