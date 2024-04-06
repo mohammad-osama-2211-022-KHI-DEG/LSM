@@ -99,8 +99,9 @@ def complainbox_telephone(class_name):
 def main():
     load_dotenv()
 
+    VIDEO_NAME = "videos/atm_func.mp4"
     ATM_MODEL = os.getenv('ATM_MODEL')
-    VIDEO_PATH = os.getenv('ATM_FUNCTIONALITY_VIDEO_PATH')
+    VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
 
     atm_model = load_model(ATM_MODEL)
 

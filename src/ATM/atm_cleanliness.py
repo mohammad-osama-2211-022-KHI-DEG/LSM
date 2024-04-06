@@ -40,8 +40,9 @@ def atm_cleanliness_status(trash_count, mess_level, prev_atm_status = "", prev_m
 def main():
     load_dotenv()
 
+    VIDEO_NAME = "videos/cleanliness.mp4"
     ATM_MODEL = os.getenv('ATM_MODEL')
-    VIDEO_PATH = os.getenv('ATM_CLEANLINESS_VIDEO_PATH')
+    VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
 
     atm_model = load_model(ATM_MODEL)
 

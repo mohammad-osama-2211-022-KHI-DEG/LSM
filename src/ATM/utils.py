@@ -29,7 +29,7 @@ def formatted_date():
     formatted_date = current_datetime.strftime('%Y-%m-%dT%H:%M:%S') + str('+05:00')
     return formatted_date
 
-def atm_overly(frame, atm_status, trash_count, mess_level,atm_functions, elapsed_time, person_presence, persons, helmet):
+def atm_overly(frame, atm_status, trash_count, mess_level,atm_functions, elapsed_time, person_presence, activity, persons, helmet):
     if elapsed_time is not None:
         cv2.putText(frame, f"Presence Time: {elapsed_time.total_seconds()}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
@@ -42,4 +42,5 @@ def atm_overly(frame, atm_status, trash_count, mess_level,atm_functions, elapsed
     cv2.putText(frame, f"No of Persons: {persons}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
     cv2.putText(frame, f"Helmet: {helmet}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
     cv2.putText(frame, f"Person Start Time: {person_presence}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+    cv2.putText(frame, f"Activity: {activity}", (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
     cv2.putText(frame, f"Atm func: {atm_functions}", (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
