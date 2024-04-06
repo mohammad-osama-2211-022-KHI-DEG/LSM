@@ -15,11 +15,10 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-person_presence = None
+person_presence_start_time = None
 elapsed_time = None 
-activity = False
 
-VIDEO_NAME = "videos/suspecious.mp4"
+VIDEO_NAME = "videos/atm_func.mp4"
 ATM_MODEL = os.getenv('ATM_MODEL')
 VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
 
@@ -39,19 +38,15 @@ while True:
 
     results = process_frame(atm_model, frame, conf=0.8)[0]
 
-    atm_functions = get_atm_functions(results)
-    #atm_transaction_status = atm_transaction(atm_functions['res'], atm_functions['class_name'])
-    sus_activity = suspecious_cases(results)
-    person_presence, elapsed_time = check_person_duration(sus_activity['num_persons'], person_presence, elapsed_time)
-    if person_presence is not None:
-        wait_time = datetime.now() - person_presence
-        if wait_time.total_seconds() > 5:
-            activity = True
-    atm_trash_count = trash_count(frame, results)
-    mess_level = calculate_mess_level(atm_trash_count)
-    atm_statuses = atm_cleanliness_status(atm_trash_count, mess_level)
+    # wait_thresould is in sec
+    persons, elapsed_time, all_sus_flags, person_presence_start_time = atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) 
+    atm_statuse, atm_trash_count, mess_level = atm_cleanliness(frame, results)
+    
 
-    atm_overly(frame, atm_statuses, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence, activity, persons = sus_activity['num_persons'], helmet = sus_activity['helmet_detected'])
+    atm_functions = get_atm_functions(results)
+
+    atm_overly(frame, atm_statuse, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence_start_time ,persons
+               ,all_sus_flags['time_exceeded_flag'], all_sus_flags['num_persons_flag'], all_sus_flags['helmet_detected_flag'])
 
     r = results.plot()
 
