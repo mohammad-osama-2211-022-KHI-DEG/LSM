@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 person_presence_start_time = None
 elapsed_time = None 
 suspecious = False
-previous_suspecious = False
+previous_suspecious = None
 previous_status = None
 previous_mess_level = None
 
@@ -52,15 +52,7 @@ while True:
 
     # wait_thresould is in sec
     persons, elapsed_time, all_sus_flags, person_presence_start_time, suspecious = atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) 
-
-    if suspecious and not previous_suspecious:
-        data = {
-            'status': suspecious,
-            'timestamp': formatted_timestamp
-        }
-        #send_data_to_endpoint(data, SUSPECIOUS_TARGET_URL, JWT_TOKEN)
-        print("sent suspecious data")
-
+    post_suspecious_status = post_sus_data(suspecious, previous_suspecious)
     previous_suspecious = suspecious
     
     atm_status, atm_trash_count, mess_level = atm_cleanliness(frame, results)
@@ -79,7 +71,7 @@ while True:
 
     atm_functions = get_atm_functions(results)
 
-    atm_overly(frame, atm_status, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence_start_time ,persons, suspecious
+    atm_overly(frame, atm_status, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence_start_time ,persons, suspecious, post_suspecious_status
                ,all_sus_flags['time_exceeded_flag'], all_sus_flags['num_persons_flag'], all_sus_flags['helmet_detected_flag'])
 
     r = results.plot()

@@ -29,7 +29,7 @@ def formatted_timestamp():
     formatted_timestamp = current_datetime.strftime('%Y-%m-%dT%H:%M:%S') + str('+05:00')
     return formatted_timestamp
 
-def atm_overly(frame, atm_status, trash_count, mess_level,atm_functions, elapsed_time, person_presence, persons, suspecious, time_exceeded_flag, persons_flag, helmet):
+def atm_overly(frame, atm_status, trash_count, mess_level,atm_functions, elapsed_time, person_presence, persons, suspecious,post_suspecious_status, time_exceeded_flag, persons_flag, helmet):
     if elapsed_time is not None:
         cv2.putText(frame, f"Presence Time: {elapsed_time.total_seconds()}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
@@ -39,7 +39,7 @@ def atm_overly(frame, atm_status, trash_count, mess_level,atm_functions, elapsed
     cv2.putText(frame, f"No of Persons: {persons}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
     cv2.putText(frame, f"Helmet: {helmet}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
     cv2.putText(frame, f"Person Start Time: {person_presence}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-    cv2.putText(frame, f"Activity: {time_exceeded_flag}", (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-    cv2.putText(frame, f"No of Persons Flag: {persons_flag}", (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 4)
-    cv2.putText(frame, f"Suspecious: {suspecious}", (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 4)
-    #cv2.putText(frame, f"Atm func: {atm_functions}", (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    cv2.putText(frame, f"Activity: {time_exceeded_flag}", (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4)
+    cv2.putText(frame, f"No of Persons Flag: {persons_flag}", (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 4)
+    cv2.putText(frame, f"Suspecious: {suspecious}", (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 4)
+    cv2.putText(frame, f"Atm Suspecious Status: {post_suspecious_status}", (10, 360), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
