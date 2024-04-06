@@ -20,6 +20,8 @@ person_presence_start_time = None
 elapsed_time = None 
 suspecious = False
 previous_suspecious = False
+previous_status = None
+previous_mess_level = None
 
 VIDEO_NAME = "videos/atm_func.mp4"
 BRANCH_ID = 1
@@ -50,7 +52,6 @@ while True:
 
     # wait_thresould is in sec
     persons, elapsed_time, all_sus_flags, person_presence_start_time, suspecious = atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) 
-    atm_statuse, atm_trash_count, mess_level = atm_cleanliness(frame, results)
 
     if suspecious and not previous_suspecious:
         data = {
@@ -62,14 +63,23 @@ while True:
 
     previous_suspecious = suspecious
     
+    atm_status, atm_trash_count, mess_level = atm_cleanliness(frame, results)
+    # Check if status has changed from False to True or vice versa
+    if previous_status is not None and previous_status != atm_status:
+        print("Status changed: ok")
+        
+    # Check if mess level has increased or decreased by 10
+    if previous_mess_level is not None and abs(mess_level - previous_mess_level) >= 10:
+        print("Mess level changed: ok")
 
-    
+    previous_status = atm_status
+    previous_mess_level = mess_level
     
     
 
     atm_functions = get_atm_functions(results)
 
-    atm_overly(frame, atm_statuse, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence_start_time ,persons, suspecious
+    atm_overly(frame, atm_status, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence_start_time ,persons, suspecious
                ,all_sus_flags['time_exceeded_flag'], all_sus_flags['num_persons_flag'], all_sus_flags['helmet_detected_flag'])
 
     r = results.plot()

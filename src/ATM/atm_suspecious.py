@@ -66,6 +66,20 @@ def atm_suspecious(results, person_presence_start_time, elapsed_time, wait_thres
     
     return persons, elapsed_time, flags, person_presence_start_time, suspicious_label
 
+def post_sus_data(suspecious, previous_suspecious):
+    if suspecious and not previous_suspecious:
+        data = {
+            'status': suspecious,
+            'timestamp': formatted_timestamp
+        }
+        #send_data_to_endpoint(data, SUSPECIOUS_TARGET_URL, JWT_TOKEN)
+        print("sent suspecious data")
+        d = 'sent'
+    else:
+        d = 'not sent'
+    
+    return previous_suspecious, d
+
 
 def main():
     load_dotenv()
@@ -73,6 +87,7 @@ def main():
     person_presence_start_time = None
     elapsed_time = None 
     suspecious = False
+    previous_suspecious = None
 
     VIDEO_NAME = "videos/atm_func.mp4"
     ATM_MODEL = os.getenv('ATM_MODEL')
@@ -91,10 +106,9 @@ def main():
 
         results = process_frame(atm_model, frame, conf=0.8)[0]
         persons, elapsed_time, all_sus_flags, person_presence_start_time, suspecious= atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) # wait_thresould is in sec
+        previous_suspecious, data = post_sus_data(suspecious, previous_suspecious)
+        previous_suspecious = suspecious
 
-        # sus_activity = suspecious_cases(results)
-        # person_presence, elapsed_time= check_person_duration(sus_activity['num_persons'], person_presence, elapsed_time)
-        # activity = presence_threshold_flag(person_presence, wait_threshould = 5, num_persons=sus_activity['num_persons']) #wait_thresould is in sec
         if elapsed_time is not None:
             cv2.putText(frame, f"Presence elapsed time: {elapsed_time.total_seconds()}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
@@ -104,6 +118,7 @@ def main():
         cv2.putText(frame, f"Start Time: {person_presence_start_time}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Person Time Excedded: {all_sus_flags['time_exceeded_flag']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"suspecious: {suspecious}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"sent data: {data}", (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
 
         

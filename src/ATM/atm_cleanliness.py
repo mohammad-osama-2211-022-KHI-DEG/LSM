@@ -40,8 +40,8 @@ def atm_cleanliness_status(trash_count, mess_level, prev_atm_status = "", prev_m
 def atm_cleanliness(frame, results):
     atm_trash_count = trash_count(frame, results)
     mess_level = calculate_mess_level(atm_trash_count)
-    atm_statuses = atm_cleanliness_status(atm_trash_count, mess_level)
-    return atm_statuses, atm_trash_count, mess_level
+    atm_statuse = atm_cleanliness_status(atm_trash_count, mess_level)
+    return atm_statuse, atm_trash_count, mess_level
 
 def main():
     load_dotenv()
@@ -64,12 +64,9 @@ def main():
         results = process_frame(atm_model, frame, conf=0.8)[0]
         atm_statuse, atm_trash_count, mess_level = atm_cleanliness(frame, results)
 
-        status_text = f"ATM Status: {atm_statuse}"
-        count_text = f"Trash Count: {atm_trash_count}"
-        level_text = f"Mess Level: {mess_level}"
-        cv2.putText(frame, status_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
-        cv2.putText(frame, count_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
-        cv2.putText(frame, level_text, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"ATM Status: {atm_statuse}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"Trash Count: {atm_trash_count}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
+        cv2.putText(frame, f"Mess Level: {mess_level}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
 
         r = results.plot()
 
