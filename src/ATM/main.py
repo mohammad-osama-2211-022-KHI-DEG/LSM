@@ -22,8 +22,19 @@ def main():
     previous_suspecious = None
     previous_status = None
     previous_mess_level = None
+
     atm_detected = False 
     start_time = int()
+
+    complainBoxAvailable = False
+    telephoneAvailable = False
+    workingstatus = True
+    counter = 0
+    successfull_count = 0
+    unsuccessfull_count = 0
+
+    previous_unsuccessful_count = 0
+    previous_successful_count = 0
 
     VIDEO_NAME = "videos/ATM_working.mp4"
     BRANCH_ID = 1
@@ -74,7 +85,32 @@ def main():
         # previous_status = atm_status
         # previous_mess_level = mess_level
         
-        atm_detected, start_time, atm_functions = get_atm_functions(results, atm_detected, start_time, threshold=10)
+        atm_detected, start_time, atm_functions = get_atm_functions(results, atm_detected, start_time, complainBoxAvailable, telephoneAvailable,
+                                                                    workingstatus, counter, successfull_count, unsuccessfull_count
+                                                                    ,threshold=10, workingstatus_threshold = 2)
+        unsuccessfull_count = atm_functions['unsuccessfull_count']
+        successfull_count = atm_functions['successfull_count']
+        workingstatus = atm_functions['workingstatus']
+        counter = atm_functions['workingstatus_counter']
+        transection_status = atm_functions['transection_status']
+
+        if unsuccessfull_count != previous_unsuccessful_count or successfull_count != previous_successful_count:
+            data = {
+            "country": "pakistan",
+            "branch": "clifton",
+            "city": "karachi",
+            "timestamp": formatted_timestamp,
+            "workingStatus": workingstatus,
+            "totalSuccessfulTransaction": successfull_count,
+            "totalUnsuccessfulTransaction": unsuccessfull_count,
+            "complaintBoxAvailable": atm_functions["complainBoxAvailable"],
+            "telephoneAvailable": atm_functions["telephoneAvailable"]
+            }
+            #send_data_to_endpoint(data, SUSPECIOUS_TARGET_URL, JWT_TOKEN)
+            print("Sent data:") 
+
+        previous_unsuccessful_count = unsuccessfull_count
+        previous_successful_count = successfull_count
 
         atm_overly(frame, atm_status, atm_trash_count, mess_level, atm_functions, sus_elapsed_time, person_presence_start_time 
                 ,persons, suspecious, post_suspecious_status
