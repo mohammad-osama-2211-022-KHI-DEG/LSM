@@ -14,8 +14,6 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
-
 person_presence_start_time = None
 elapsed_time = None 
 suspecious = False
@@ -27,10 +25,13 @@ VIDEO_NAME = "videos/atm_func.mp4"
 BRANCH_ID = 1
 ATM_MODEL = os.getenv('ATM_MODEL')
 VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
+LOG_FILENAME = os.getenv('LOG_FILENAME')
 USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
 AUTH_URL = os.path.join(os.getenv('ENDPOINT'), "auth/user")
 SUSPECIOUS_TARGET_URL = os.path.join(os.getenv('ENDPOINT'), f"suspicious?branchId={BRANCH_ID}")
+
+setup_logging(LOG_FILENAME)
 
 atm_model = load_model(ATM_MODEL)
 cap = load_video(VIDEO_PATH)
@@ -39,7 +40,8 @@ cap = load_video(VIDEO_PATH)
 
 # Get current FPS
 fps = get_fps(cap)
-print("Current FPS:", fps)
+logging.info(f"frame_rate: {fps}")
+# print("Current FPS:", fps)
 
 while True:
 
@@ -56,6 +58,7 @@ while True:
     previous_suspecious = suspecious
     
     atm_status, atm_trash_count, mess_level = atm_cleanliness(frame, results)
+    
     # Check if status has changed from False to True or vice versa
     if previous_status is not None and previous_status != atm_status:
         print("Status changed: ok")
