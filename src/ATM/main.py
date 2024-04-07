@@ -12,78 +12,85 @@ from dotenv import load_dotenv
 import time
 from datetime import datetime, timedelta
 
-load_dotenv()
 
-person_presence_start_time = None
-elapsed_time = None 
-suspecious = False
-previous_suspecious = None
-previous_status = None
-previous_mess_level = None
+def main():
+    load_dotenv()
 
-VIDEO_NAME = "videos/atm_func.mp4"
-BRANCH_ID = 1
-ATM_MODEL = os.getenv('ATM_MODEL')
-VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
-LOG_FILENAME = os.getenv('LOG_FILENAME')
-USERNAME = os.getenv('USERNAME')
-PASSWORD = os.getenv('PASSWORD')
-AUTH_URL = os.path.join(os.getenv('ENDPOINT'), "auth/user")
-SUSPECIOUS_TARGET_URL = os.path.join(os.getenv('ENDPOINT'), f"suspicious?branchId={BRANCH_ID}")
+    person_presence_start_time = None
+    sus_elapsed_time = None 
+    suspecious = False
+    previous_suspecious = None
+    previous_status = None
+    previous_mess_level = None
+    atm_detected = False 
+    start_time = int()
 
-setup_logging(LOG_FILENAME)
+    VIDEO_NAME = "videos/ATM_working.mp4"
+    BRANCH_ID = 1
+    ATM_MODEL = os.getenv('ATM_MODEL')
+    VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
+    LOG_FILENAME = os.getenv('LOG_FILENAME')
+    USERNAME = os.getenv('USERNAME')
+    PASSWORD = os.getenv('PASSWORD')
+    AUTH_URL = os.path.join(os.getenv('ENDPOINT'), "auth/user")
+    SUSPECIOUS_TARGET_URL = os.path.join(os.getenv('ENDPOINT'), f"suspicious?branchId={BRANCH_ID}")
 
-atm_model = load_model(ATM_MODEL)
-cap = load_video(VIDEO_PATH)
+    setup_logging(LOG_FILENAME)
 
-#JWT_TOKEN = get_jwt_token(AUTH_URL, USERNAME, PASSWORD)
+    atm_model = load_model(ATM_MODEL)
+    cap = load_video(VIDEO_PATH)
 
-# Get current FPS
-fps = get_fps(cap)
-logging.info(f"frame_rate: {fps}")
-# print("Current FPS:", fps)
+    #JWT_TOKEN = get_jwt_token(AUTH_URL, USERNAME, PASSWORD)
 
-while True:
+    # Get current FPS
+    fps = get_fps(cap)
+    logging.info(f"frame_rate: {fps}")
+    # print("Current FPS:", fps)
 
-    ret, frame = cap.read()
+    while True:
 
-    if not ret:
-        break
+        ret, frame = cap.read()
 
-    results = process_frame(atm_model, frame, conf=0.8)[0]
+        if not ret:
+            break
 
-    # wait_thresould is in sec
-    persons, elapsed_time, all_sus_flags, person_presence_start_time, suspecious = atm_suspecious(results,person_presence_start_time, elapsed_time, wait_threshould = 2) 
-    post_suspecious_status = post_sus_data(suspecious, previous_suspecious)
-    previous_suspecious = suspecious
-    
-    atm_status, atm_trash_count, mess_level = atm_cleanliness(frame, results)
-    
-    # Check if status has changed from False to True or vice versa
-    if previous_status is not None and previous_status != atm_status:
-        print("Status changed: ok")
+        results = process_frame(atm_model, frame, conf=0.8)[0]
+
+        # wait_thresould is in sec
+        persons, sus_elapsed_time, all_sus_flags, person_presence_start_time, suspecious = atm_suspecious(results,person_presence_start_time, sus_elapsed_time, wait_threshould = 2) 
+        post_suspecious_status = post_sus_data(suspecious, previous_suspecious)
+        previous_suspecious = suspecious
         
-    # Check if mess level has increased or decreased by 10
-    if previous_mess_level is not None and abs(mess_level - previous_mess_level) >= 10:
-        print("Mess level changed: ok")
+        atm_status, atm_trash_count, mess_level = atm_cleanliness(frame, results)
 
-    previous_status = atm_status
-    previous_mess_level = mess_level
-    
-    
+        # Check if status has changed from False to True or vice versa
+        # if previous_status is not None and previous_status != atm_status:
+        #     print("Status changed: ok")
+            
+        # # Check if mess level has increased or decreased by 10
+        # if previous_mess_level is not None and abs(mess_level - previous_mess_level) >= 10:
+        #     print("Mess level changed: ok")
 
-    atm_functions = get_atm_functions(results)
+        # previous_status = atm_status
+        # previous_mess_level = mess_level
+        
+        atm_detected, start_time, atm_functions = get_atm_functions(results, atm_detected, start_time, threshold=10)
 
-    atm_overly(frame, atm_status, atm_trash_count, mess_level, atm_functions, elapsed_time, person_presence_start_time ,persons, suspecious, post_suspecious_status
-               ,all_sus_flags['time_exceeded_flag'], all_sus_flags['num_persons_flag'], all_sus_flags['helmet_detected_flag'])
+        atm_overly(frame, atm_status, atm_trash_count, mess_level, atm_functions, sus_elapsed_time, person_presence_start_time 
+                ,persons, suspecious, post_suspecious_status
+                ,all_sus_flags['time_exceeded_flag'], all_sus_flags['num_persons_flag'], all_sus_flags['helmet_detected_flag'])
+        
+        cv2.putText(frame, f"atm_detected: {atm_detected}", (10, 510), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        r = results.plot()
 
-    r = results.plot()
+        cv2.imshow('ATM', r)
 
-    cv2.imshow('ATM', r)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    # Release the video capture object and close the display window
+    cap.release()
+    cv2.destroyAllWindows()
 
-# Release the video capture object and close the display window
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == '__main__':
+    main()
