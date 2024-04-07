@@ -9,49 +9,6 @@ import requests
 import os
 from utils import *
 from dotenv import load_dotenv
-
-def atm_transaction(res, class_name):
-    atm_detected = False 
-    workingStatus = True 
-    total_working_count = 0
-    total_notworking_count = 0
-    counter = 0
-    data = dict()
-
-    if len(res) != 0 and not atm_detected:
-        if 0.0 in class_name and res[0.0] >= 0.4:
-            atm_detected = True
-            count = 0
-    elif len(res) != 0 and atm_detected:
-        if 1.0 in class_name and res[1.0] >= 0.2:
-            workingStatus = True
-            total_working_count += 1
-            atm_detected = False
-            return {'workingStatus': workingStatus, 'total_working_count': total_working_count, 'total_notworking_count': total_notworking_count}
-        elif count >= 1000:
-            counter += 1
-            total_notworking_count += 1
-            if counter >= 2:
-                workingStatus = False
-                counter = 0
-                return {'workingStatus': workingStatus, 'total_working_count': total_working_count, 'total_notworking_count': total_notworking_count}
-            atm_detected = False
-        else:
-            count += 1
-    elif atm_detected:
-        if count >= 1000:
-            counter += 1
-            total_notworking_count += 1
-            if counter >= 2:
-                workingStatus = False
-                counter = 0
-                return {'workingStatus': workingStatus, 'total_working_count': total_working_count, 'total_notworking_count': total_notworking_count}
-            atm_detected = False
-        else:
-            count += 1
-    else:
-        pass
-
     
 def get_atm_functions(results):
     complainBoxAvailable = False
@@ -70,9 +27,27 @@ def get_atm_functions(results):
         complainBoxAvailable = alert_cb_tel["complaintBoxAvailable"]
         telephoneAvailable = alert_cb_tel["telephoneAvailable"]
 
-        data = atm_transaction(res, class_name)
+    return {'res': res, 'complainBoxAvailable': complainBoxAvailable, 'telephoneAvailable': telephoneAvailable}
 
-    return {'data': data, 'complainBoxAvailable': complainBoxAvailable, 'telephoneAvailable': telephoneAvailable}
+def detect_atm_and_start_timer(res, atm_detected, start_time):
+    
+    if len(res) != 0 and 0.0 in res:
+        atm_detected = True
+        start_time = time.time()  # Start timer
+    
+    return atm_detected, start_time
+
+def check_transaction_success(atm_detected, start_time, res, threshold):
+    if atm_detected:
+        elapsed_time = time.time() - start_time
+        
+        if elapsed_time <= threshold and 1.0 in res:
+            return True, elapsed_time, "Successful transaction"
+        else:
+            return False, elapsed_time, "Unsuccessful transaction (Timeout or no cash detected)"
+    else:
+        return False, None, "No Transaction is being happened....."
+
 
 def complainbox_telephone(class_name):
     # Complain-box & Telephone are present
@@ -99,12 +74,19 @@ def complainbox_telephone(class_name):
 def main():
     load_dotenv()
 
-    VIDEO_NAME = "videos/atm_func.mp4"
+    atm_detected = False 
+    start_time = None
+    transection_status = None 
+    elapsed_time = None
+    transection_message = ''
+    start_reset = False
+    atm_detected_reset = False
+
+    VIDEO_NAME = "videos/ATM_working.mp4"
     ATM_MODEL = os.getenv('ATM_MODEL')
     VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
 
     atm_model = load_model(ATM_MODEL)
-
     cap = load_video(VIDEO_PATH)
 
     while True:
@@ -114,10 +96,19 @@ def main():
         if not ret:
             break
 
-        results = process_frame(atm_model, frame, conf=0.8)[0]
+        results = process_frame(atm_model, frame, conf=0.6)[0]
         atm_functions = get_atm_functions(results)
+        atm_detected, start_time = detect_atm_and_start_timer(atm_functions['res'], atm_detected, start_time, start_reset, atm_detected_reset)
+        transection_status, elapsed_time, transection_message = check_transaction_success(atm_detected, start_time, atm_functions['res'], threshold=1000)
+        if transection_status:
+            atm_detected = False
+            start_time = None
 
         cv2.putText(frame, f"Atm func: {atm_functions}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"transection_status: {transection_status}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"elapsed_time: {elapsed_time}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"atm_detected: {atm_detected}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"transection_message: {transection_message}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
         r = results.plot()
 
