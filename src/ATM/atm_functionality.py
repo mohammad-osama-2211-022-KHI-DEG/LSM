@@ -10,13 +10,13 @@ import os
 from utils import *
 from dotenv import load_dotenv
     
-def get_atm_functions(results):
+def get_atm_functions(results, atm_detected, start_time, threshold):
     complainBoxAvailable = False
     telephoneAvailable = False
+
     res={}
     class_name = []
     confidences = []
-    data = dict()
 
     for result in results:
         class_name, confidences = result.boxes.cls.tolist(), result.boxes.conf.tolist()
@@ -27,7 +27,19 @@ def get_atm_functions(results):
         complainBoxAvailable = alert_cb_tel["complaintBoxAvailable"]
         telephoneAvailable = alert_cb_tel["telephoneAvailable"]
 
-    return {'res': res, 'complainBoxAvailable': complainBoxAvailable, 'telephoneAvailable': telephoneAvailable}
+    atm_detected, start_time = detect_atm_and_start_timer(res, atm_detected, start_time)
+    transection_status, elapsed_time, transection_message = check_transaction_success(atm_detected, start_time, res, threshold)
+    if elapsed_time is not None:
+        if elapsed_time >= threshold:
+            atm_detected = False
+            start_time = None
+    if transection_status:
+        atm_detected = False
+        start_time = None
+
+    return atm_detected, start_time, {'res': res, 'complainBoxAvailable': complainBoxAvailable, 'telephoneAvailable': telephoneAvailable
+            , 'transection_status': transection_status, 'elapsed_time': elapsed_time, 'class_name': class_name
+            ,'transection_message': transection_message}
 
 def detect_atm_and_start_timer(res, atm_detected, start_time):
     
@@ -43,8 +55,10 @@ def check_transaction_success(atm_detected, start_time, res, threshold):
         
         if elapsed_time <= threshold and 1.0 in res:
             return True, elapsed_time, "Successful transaction"
+        if elapsed_time >= threshold and 1.0 not in res:
+            return False, elapsed_time, "Timeout or Cash not detected"
         else:
-            return False, elapsed_time, "Unsuccessful transaction (Timeout or no cash detected)"
+            return False, elapsed_time, "Tracking transaction....."
     else:
         return False, None, "No Transaction is being happened....."
 
@@ -75,12 +89,7 @@ def main():
     load_dotenv()
 
     atm_detected = False 
-    start_time = None
-    transection_status = None 
-    elapsed_time = None
-    transection_message = ''
-    start_reset = False
-    atm_detected_reset = False
+    start_time = int()
 
     VIDEO_NAME = "videos/ATM_working.mp4"
     ATM_MODEL = os.getenv('ATM_MODEL')
@@ -97,18 +106,14 @@ def main():
             break
 
         results = process_frame(atm_model, frame, conf=0.6)[0]
-        atm_functions = get_atm_functions(results)
-        atm_detected, start_time = detect_atm_and_start_timer(atm_functions['res'], atm_detected, start_time, start_reset, atm_detected_reset)
-        transection_status, elapsed_time, transection_message = check_transaction_success(atm_detected, start_time, atm_functions['res'], threshold=1000)
-        if transection_status:
-            atm_detected = False
-            start_time = None
+        atm_detected, start_time, atm_functions = get_atm_functions(results, atm_detected, start_time, threshold=10)
 
-        cv2.putText(frame, f"Atm func: {atm_functions}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-        cv2.putText(frame, f"transection_status: {transection_status}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-        cv2.putText(frame, f"elapsed_time: {elapsed_time}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-        cv2.putText(frame, f"atm_detected: {atm_detected}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-        cv2.putText(frame, f"transection_message: {transection_message}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Atm complainBoxAvailable: {atm_functions['complainBoxAvailable']}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Atm telephoneAvailable: {atm_functions['telephoneAvailable']}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"transection_status: {atm_functions['transection_status']}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"elapsed_time: {atm_functions['elapsed_time']}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"atm_detected: {atm_detected}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"transection_message: {atm_functions['transection_message']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
         r = results.plot()
 
