@@ -1,2 +1,16 @@
-.env
+# Directories
+venv/
+env/
+build/
+*.egg-info/
+__pycache__/
 data/
+
+# File formats
+*.pyc
+
+# Files
+.env
+text.txt
+.DS_Store
+.mypy_cache
