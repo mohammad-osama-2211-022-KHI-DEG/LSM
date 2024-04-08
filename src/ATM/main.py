@@ -52,6 +52,8 @@ def main():
     cap = load_video(VIDEO_PATH)
 
     #JWT_TOKEN = get_jwt_token(AUTH_URL, USERNAME, PASSWORD)
+    print(AUTH_URL)
+    #print(JWT_TOKEN)
 
     # Get current FPS
     fps = get_fps(cap)
@@ -66,6 +68,8 @@ def main():
             break
 
         results = process_frame(atm_model, frame, conf=0.8)[0]
+
+        print()
 
         # wait_thresould is in sec
         persons, sus_elapsed_time, all_sus_flags, person_presence_start_time, suspecious = atm_suspecious(results,person_presence_start_time, sus_elapsed_time, wait_threshould = 2) 
