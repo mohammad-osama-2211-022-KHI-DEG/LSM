@@ -90,9 +90,11 @@ def atm_suspecious(results, person_presence_start_time: datetime, elapsed_time: 
     return persons, elapsed_time, flags, person_presence_start_time, suspicious_label
 
 def post_sus_data(suspicious: int, previous_suspicious: int) -> int:
-    if not isinstance(suspicious, int):
+    if suspicious not in [0, 1] or previous_suspicious not in [0, 1]:
+        raise ValueError("suspicious and previous_suspicious must be either 0 or 1")
+    if (type(suspicious) == int) is False:
         raise TypeError("suspicious must be an integer")
-    if not isinstance(previous_suspicious, int):
+    if (type(previous_suspicious) == int) is False:
         raise TypeError("previous_suspicious must be an integer")
     status = 0
     if suspicious == 1 and previous_suspicious == 0:
@@ -139,7 +141,8 @@ def main() -> None:
         cv2.putText(frame, f"No of Persons: {persons}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"No of Persons Flag: {all_sus_flags['num_persons_flag']}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Presence elapsed time: {elapsed_time.total_seconds()}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-        cv2.putText(frame, f"Start Time: {person_presence_start_time}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Start Time: {None if person_presence_start_time == datetime(1970, 1, 1, 0, 0, 0) else person_presence_start_time}",
+                     (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Person Time Exceeded: {all_sus_flags['time_exceeded_flag']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Suspicious: {'SUSPICIOUS' if suspicious == 1 else 'NORMAL'}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
