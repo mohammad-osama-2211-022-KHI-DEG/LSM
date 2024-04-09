@@ -28,6 +28,8 @@ def suspecious_cases(results) -> dict[str: Any]:
 def check_person_duration(num_persons: int, person_presence_start_time: datetime, elapsed_time: timedelta) -> tuple[datetime, timedelta]:
     if num_persons < 0:
         raise ValueError("num_persons must be non-negative")
+    if (type(num_persons) == int) is False:
+        raise ValueError("num_persons must be integer")
     if not isinstance(person_presence_start_time, datetime):
         raise TypeError("person_presence_start_time must be a datetime object")
     if not isinstance(elapsed_time, timedelta):
@@ -50,6 +52,8 @@ def presence_threshold_flag(person_presence: datetime, wait_threshould: int, num
         raise TypeError("wait_threshould must be an integer")
     if num_persons < 0:
         raise ValueError("num_persons must be non-negative")
+    if (type(num_persons) == int) is False:
+        raise ValueError("num_persons must be integer")
 
     if num_persons != 0 and person_presence != datetime(1970, 1, 1, 0, 0, 0):
         wait_time: timedelta = datetime.now() - person_presence
@@ -67,13 +71,14 @@ def atm_suspecious(results, person_presence_start_time: datetime, elapsed_time: 
         raise TypeError("person_presence_start_time must be a datetime object")
     if not isinstance(elapsed_time, timedelta):
         raise TypeError("elapsed_time must be a timedelta object")
-    if not isinstance(wait_threshould, int):
+    if (type(wait_threshould) == int) is False:
         raise TypeError("wait_threshould must be integer")
     
     time_exceeded_flag: bool = False
     sus_activity: dict = suspecious_cases(results)
-    person_presence_start_time, elapsed_time = check_person_duration(int(sus_activity['num_persons']), person_presence_start_time, elapsed_time)
-    time_exceeded_flag: bool = presence_threshold_flag(person_presence_start_time, wait_threshould, num_persons=sus_activity['num_persons'])
+    num_persons: int = int(sus_activity['num_persons'])
+    person_presence_start_time, elapsed_time = check_person_duration(num_persons, person_presence_start_time, elapsed_time)
+    time_exceeded_flag: bool = presence_threshold_flag(person_presence_start_time, wait_threshould, num_persons)
     persons: int = sus_activity['num_persons']
     flags: dict[str: bool] = {'num_persons_flag': sus_activity['num_persons_flag'],
                 'time_exceeded_flag': time_exceeded_flag,
@@ -93,7 +98,7 @@ def post_sus_data(suspicious: int, previous_suspicious: int) -> int:
     status = 0
     if suspicious == 1 and previous_suspicious == 0:
         data = {
-            'status': suspicious,
+            'status': 'SUSPICIOUS' if suspicious == 1 else 'NORMAL',
             'timestamp': formatted_timestamp  
         }
         #status = send_data_to_endpoint(data, SUSPICIOUS_TARGET_URL, JWT_TOKEN)
