@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 from utils import *
 import numpy as np
+import requests
 
-def suspecious_cases(results: YOLO) -> dict[str: Any]:
+def suspecious_cases(results) -> dict[str: Any]:
     try:
         helmet_detected: bool = False
         num_persons_flag: bool = False
@@ -26,7 +27,7 @@ def suspecious_cases(results: YOLO) -> dict[str: Any]:
         logging.error(f"Error in suspecious_cases function: {e}")
         raise
 
-def check_person_duration(num_persons: int, person_presence_start_time: datetime, elapsed_time: timedelta) -> tuple:
+def check_person_duration(num_persons: int, person_presence_start_time: datetime, elapsed_time: timedelta) -> tuple[datetime, timedelta]:
     try:
         if num_persons != 0 and person_presence_start_time is None:
             start_time: datetime = datetime.now()
@@ -43,7 +44,7 @@ def check_person_duration(num_persons: int, person_presence_start_time: datetime
 def presence_threshold_flag(person_presence: datetime, wait_threshould: int, num_persons: int) -> bool:
     try:
         if num_persons != 0 and person_presence is not None:
-            wait_time = datetime.now() - person_presence
+            wait_time: timedelta = datetime.now() - person_presence
             if wait_time.total_seconds() >= wait_threshould:
                 return True
         elif num_persons == 0 and person_presence is None:
@@ -54,7 +55,7 @@ def presence_threshold_flag(person_presence: datetime, wait_threshould: int, num
         logging.error(f"Error in presence_threshold_flag function: {e}")
         raise
 
-def atm_suspecious(results: YOLO, person_presence_start_time: datetime, elapsed_time: timedelta, wait_threshould: int) -> tuple:
+def atm_suspecious(results, person_presence_start_time: datetime, elapsed_time: timedelta, wait_threshould: int) -> tuple[int, timedelta, dict[str: bool], datetime, str]:
     try:
         time_exceeded_flag: bool = False
         sus_activity: dict = suspecious_cases(results)
@@ -81,8 +82,8 @@ def post_sus_data(suspicious: str, previous_suspicious: str) -> int:
                 'status': suspicious,
                 'timestamp': formatted_timestamp  
             }
-            # send_data_to_endpoint(data, SUSPICIOUS_TARGET_URL, JWT_TOKEN)
-            print("sent suspicious data")
+            #status = send_data_to_endpoint(data, SUSPICIOUS_TARGET_URL, JWT_TOKEN)
+            #print("sent suspicious data")
             status = 200
 
         return status
@@ -98,24 +99,23 @@ def main() -> None:
         ATM_MODEL = os.getenv('ATM_MODEL')
         VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
 
-        person_presence_start_time = None
-        elapsed_time = None 
+        person_presence_start_time: datetime = None
+        elapsed_time: timedelta = None 
         suspicious: bool = False
-        previous_suspicious = None
+        previous_suspicious: str = None
 
         atm_model: YOLO = load_model(ATM_MODEL)
         cap: cv2.VideoCapture = load_video(VIDEO_PATH)
 
         while True:
             ret: bool
-            frame: Any
+            frame: np.ndarray
 
             ret, frame = cap.read()
             if not ret:
                 break
 
             results = process_frame(atm_model, frame, conf=0.8)[0]
-            print(type(results))
             persons, elapsed_time, all_sus_flags, person_presence_start_time, suspicious = atm_suspecious(results, person_presence_start_time, elapsed_time, wait_threshould=2)
             post_sus_data(suspicious, previous_suspicious)
             previous_suspicious = suspicious
