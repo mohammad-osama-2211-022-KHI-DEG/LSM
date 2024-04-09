@@ -11,7 +11,7 @@ import numpy as np
 import requests
 
 def suspecious_cases(results) -> dict[str: Any]:
-    if results is None: raise TypeError("results can not be empty")
+    if results is None: raise TypeError("results can not be None")
     helmet_detected: bool = False
     num_persons_flag: bool = False
     class_ids: np.ndarray = results.boxes.cls.numpy()
@@ -66,7 +66,7 @@ def presence_threshold_flag(person_presence: datetime, wait_threshould: int, num
 
 def atm_suspecious(results, person_presence_start_time: datetime, elapsed_time: timedelta, wait_threshould: int) -> tuple[int, timedelta, dict[str: bool], datetime, str]:
     if results is None:
-        raise TypeError("results can not be empty")
+        raise TypeError("results can not be None")
     if not isinstance(person_presence_start_time, datetime):
         raise TypeError("person_presence_start_time must be a datetime object")
     if not isinstance(elapsed_time, timedelta):
@@ -89,7 +89,6 @@ def atm_suspecious(results, person_presence_start_time: datetime, elapsed_time: 
     
     return persons, elapsed_time, flags, person_presence_start_time, suspicious_label
 
-
 def post_sus_data(suspicious: int, previous_suspicious: int) -> int:
     if not isinstance(suspicious, int):
         raise TypeError("suspicious must be an integer")
@@ -108,54 +107,50 @@ def post_sus_data(suspicious: int, previous_suspicious: int) -> int:
     return status
 
 def main() -> None:
-    try:
-        load_dotenv()
 
-        VIDEO_NAME = "videos/atm_func.mp4"
-        ATM_MODEL = os.getenv('ATM_MODEL')
-        VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
+    load_dotenv()
 
-        person_presence_start_time: datetime = datetime(1970, 1, 1, 0, 0, 0)
-        elapsed_time: timedelta = timedelta(0)
-        suspicious: int = 0  # 1 for SUSPECIOUS 0 for NORMAL
-        previous_suspicious: int = 0
+    VIDEO_NAME = "videos/atm_func.mp4"
+    ATM_MODEL = os.getenv('ATM_MODEL')
+    VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), VIDEO_NAME)
 
-        atm_model: YOLO = load_model(ATM_MODEL)
-        cap: cv2.VideoCapture = load_video(VIDEO_PATH)
+    person_presence_start_time: datetime = datetime(1970, 1, 1, 0, 0, 0)
+    elapsed_time: timedelta = timedelta(0)
+    suspicious: int = 0  # 1 for SUSPECIOUS 0 for NORMAL
+    previous_suspicious: int = 0
 
-        while True:
-            ret: bool
-            frame: np.ndarray
+    atm_model: YOLO = load_model(ATM_MODEL)
+    cap: cv2.VideoCapture = load_video(VIDEO_PATH)
 
-            ret, frame = cap.read()
-            if not ret:
-                break
+    while True:
+        ret: bool
+        frame: np.ndarray
 
-            results = process_frame(atm_model, frame, conf=0.8)[0]
-            persons, elapsed_time, all_sus_flags, person_presence_start_time, suspicious = atm_suspecious(results, person_presence_start_time, elapsed_time, wait_threshould=2)
-            post_sus_data(suspicious, previous_suspicious)
-            previous_suspicious = suspicious
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-            if elapsed_time is not timedelta(0):
-                cv2.putText(frame, f"Presence elapsed time: {elapsed_time.total_seconds()}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        results = process_frame(atm_model, frame, conf=0.8)[0]
+        persons, elapsed_time, all_sus_flags, person_presence_start_time, suspicious = atm_suspecious(results, person_presence_start_time, elapsed_time, wait_threshould=2)
+        post_sus_data(suspicious, previous_suspicious)
+        previous_suspicious = suspicious
 
-            cv2.putText(frame, f"Helmet: {all_sus_flags['helmet_detected_flag']}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 4)
-            cv2.putText(frame, f"No of Persons: {persons}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-            cv2.putText(frame, f"No of Persons Flag: {all_sus_flags['num_persons_flag']}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-            cv2.putText(frame, f"Start Time: {person_presence_start_time}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-            cv2.putText(frame, f"Person Time Exceeded: {all_sus_flags['time_exceeded_flag']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-            cv2.putText(frame, f"Suspicious: {suspicious}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Helmet: {all_sus_flags['helmet_detected_flag']}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 4)
+        cv2.putText(frame, f"No of Persons: {persons}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"No of Persons Flag: {all_sus_flags['num_persons_flag']}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Presence elapsed time: {elapsed_time.total_seconds()}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Start Time: {person_presence_start_time}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Person Time Exceeded: {all_sus_flags['time_exceeded_flag']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"Suspicious: {'SUSPICIOUS' if suspicious == 1 else 'NORMAL'}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
-            r = results.plot()
-            cv2.imshow('atm', r)
+        r = results.plot()
+        cv2.imshow('ATM', r)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-        cap.release()
-        cv2.destroyAllWindows()
-    except Exception as e:
-        logging.error(f"Error in main function: {e}")
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
