@@ -4,17 +4,24 @@ from ultralytics import YOLO
 import cv2
 import asyncio
 import json
+import os
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
 app = FastAPI()
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 
+ATM_MODEL = os.getenv('ATM_MODEL')
+GUARD_MODEL = os.getenv('GUARD_MODEL')
+
 # Load the YOLO models
 model_paths = {
-    "cleanliness": '/home/xloop/LSM/src/models/ATM_models/atm_model_v3.pt',
-    "suspicious": '/home/xloop/LSM/src/models/suspecious_activity_last_modified.pt'
+    "cleanliness": ATM_MODEL,
+    "guard": GUARD_MODEL,
 }
+
 
 models = {name: YOLO(path) for name, path in model_paths.items()}
 

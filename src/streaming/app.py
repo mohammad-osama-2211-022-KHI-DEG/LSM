@@ -1,14 +1,25 @@
 from fastapi import FastAPI, Response
 from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
 import cv2
+import os
 
 video_app = FastAPI()
+load_dotenv()
+
+CLEANLINESS_VIDEO_NAME = "videos/cleanliness.mp4"
+SUSPECIOUS_VIDEO_NAME = "videos/suspecious.mp4"
+GUARD_ATTIRE_VIDEO_NAME = "videos/2_guards.mp4"
+
+CLEANLINESS_VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), CLEANLINESS_VIDEO_NAME)
+GUARD_VIDEO_PATH = os.path.join(os.getenv('GUARD_ATTIRE_VIDEO_PATHS'), GUARD_ATTIRE_VIDEO_NAME)
+SUSPECIOUS_VIDEO_PATH = os.path.join(os.getenv('ATM_VIDEO_PATHS'), SUSPECIOUS_VIDEO_NAME)
 
 # Dictionary mapping video names to file paths
 video_files = {
-    'cleanliness_1': '/home/xloop/LSM/data/ATM_data/videos/cleanliness.mp4',
-    'cleanliness_2': '/home/xloop/LSM/data/ATM_data/videos/ATM_working.mp4',
-    'suspicious_1': '/home/xloop/LSM/data/ATM_data/videos/suspecious.mp4',
+    'cleanliness_1': CLEANLINESS_VIDEO_PATH,
+    'suspicious_1': SUSPECIOUS_VIDEO_PATH,
+    'guard_attire_1': GUARD_VIDEO_PATH,
 }
 
 @video_app.get("/video/{video_name}")
