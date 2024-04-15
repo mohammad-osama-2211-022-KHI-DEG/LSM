@@ -98,11 +98,12 @@ def main() -> None:
     suspicious: int = 0  # 1 for SUSPECIOUS 0 for NORMAL
     previous_suspicious: int = 0
     initial_time: datetime = datetime(1970, 1, 1, 0, 0, 0)
-    
+    frame_count: int = 0
 
     atm_model: YOLO = load_model(ATM_MODEL)
     cap: cv2.VideoCapture = load_video(VIDEO_PATH)
-
+    fps: int = int(cap.get(cv2.CAP_PROP_FPS))
+    
     while True:
         ret: bool
         frame: np.ndarray
@@ -110,6 +111,11 @@ def main() -> None:
         ret, frame = cap.read()
         if not ret:
             break
+
+        frame_count += 1
+        if frame_count % fps != 0: # for 1 fps
+            logging.info(f"frame : {frame_count % fps}")
+            continue
 
         results = process_frame(atm_model, frame, conf=0.8)[0]
         persons, elapsed_time, all_sus_flags, person_presence_start_time, suspicious_state = atm_suspecious(results
@@ -124,7 +130,7 @@ def main() -> None:
         cv2.putText(frame, f"Start Time: {None if person_presence_start_time == datetime(1970, 1, 1, 0, 0, 0) else person_presence_start_time}",
                      (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
         cv2.putText(frame, f"Person Time Exceeded: {all_sus_flags['time_exceeded_flag']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
-        cv2.putText(frame, f"Suspicious: {'SUSPICIOUS' if suspicious_state == 1 else 'NORMAL'}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
+        cv2.putText(frame, f"state: {'SUSPICIOUS' if suspicious_state == 1 else 'NORMAL'}", (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 4)
 
         r = results.plot()
         cv2.imshow('ATM', r)
