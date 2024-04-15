@@ -1,14 +1,14 @@
 #!/bin/bash
 
-cd /home/xloop/LSM/src/ATM
+cd /home/shahzaibkhan/work/bafl_workflows/LSM/src/ATM
 python3 main.py &
 
-cd /home/xloop/LSM/src/fastapi_serve
+cd /home/shahzaibkhan/work/bafl_workflows/LSM/src/fastapi_serve
 uvicorn app:app --workers 4 &
 
 sleep 3
 
-cd /home/xloop/LSM/src/streaming
+cd /home/shahzaibkhan/work/bafl_workflows/LSM/src/streaming
 uvicorn app:video_app --port 8001 &
 
 sleep 5

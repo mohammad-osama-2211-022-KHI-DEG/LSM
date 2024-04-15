@@ -1,17 +1,14 @@
-import logging
+# model_server.py
 from fastapi import FastAPI
 from ultralytics import YOLO
-import cv2
-import asyncio
-import json
 import os
-from pydantic import BaseModel
 from dotenv import load_dotenv
+from pydantic import BaseModel
+import asyncio
+from stream_processor import process_stream
 
 app = FastAPI()
 load_dotenv()
-
-logging.basicConfig(level=logging.INFO)
 
 ATM_MODEL = os.getenv('ATM_MODEL')
 GUARD_MODEL = os.getenv('GUARD_MODEL')
@@ -22,31 +19,10 @@ model_paths = {
     "guard": GUARD_MODEL,
 }
 
-
 models = {name: YOLO(path) for name, path in model_paths.items()}
 
 class DetectRequest(BaseModel):
     rtsp_url: str
-
-async def process_stream(rtsp_url, model):
-    cap = cv2.VideoCapture(rtsp_url)
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Run inference directly on the frame
-        results = model(frame)
-
-        # Process the results as needed
-        for result in results:
-            # Log or process the result here
-            results_array = json.loads(result.tojson())
-            logging.info(f"Result: {results_array}")
-
-    cap.release()
-    cv2.destroyAllWindows()
 
 @app.post("/detect/{model_name}/")
 async def detect_objects(model_name: str, request: DetectRequest):

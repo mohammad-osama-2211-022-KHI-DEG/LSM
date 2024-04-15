@@ -2,3 +2,7 @@ opencv-python
 ultralytics
 python-multipart
 python-dotenv
+httpx
+fastapi
+uvicorn
+aiohttp
