@@ -67,17 +67,11 @@ async def process_stream(rtsp_url, model):
         workingstatus = atm_functions['workingstatus']
         counter = atm_functions['workingstatus_counter']
 
-        # Overlay information on the frame
-        cv2.putText(frame, f"ATM Detected: {atm_detected}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.putText(frame, f"Working Status: {workingstatus}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.putText(frame, f"Successful Transactions: {successfull_count}", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.putText(frame, f"Unsuccessful Transactions: {unsuccessfull_count}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
         # Display the frame
         cv2.imshow('ATM Surveillance', frame)
 
         # Log or process the results as needed
-        logging.info(f"ATM Detected: {atm_detected}, Working Status: {workingstatus}, Successful Transactions: {successfull_count}, Unsuccessful Transactions: {unsuccessfull_count}")
+        # logging.info(f"ATM Detected: {atm_detected}, Working Status: {workingstatus}, Successful Transactions: {successfull_count}, Unsuccessful Transactions: {unsuccessfull_count}")
 
         # Break the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):

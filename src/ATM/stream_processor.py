@@ -71,7 +71,7 @@ async def process_stream(rtsp_url, model):
         cv2.imshow('ATM Surveillance', frame)
 
         # Log or process the results as needed
-        logging.info(f"ATM Detected: {atm_detected}, Working Status: {workingstatus}, Successful Transactions: {successfull_count}, Unsuccessful Transactions: {unsuccessfull_count}")
+        # logging.info(f"ATM Detected: {atm_detected}, Working Status: {workingstatus}, Successful Transactions: {successfull_count}, Unsuccessful Transactions: {unsuccessfull_count}")
 
         # Break the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
