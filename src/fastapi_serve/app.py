@@ -1,4 +1,3 @@
-# model_server.py
 from fastapi import FastAPI
 from ultralytics import YOLO
 import os
@@ -10,12 +9,14 @@ from stream_processor import process_stream
 app = FastAPI()
 load_dotenv()
 
+CLEANLINESS = os.getenv('CLEANLINESS')
 ATM_MODEL = os.getenv('ATM_MODEL')
 GUARD_MODEL = os.getenv('GUARD_MODEL')
 
 # Load the YOLO models
 model_paths = {
-    "cleanliness": ATM_MODEL,
+    "cleanliness": CLEANLINESS,
+    "atm": ATM_MODEL,
     "guard": GUARD_MODEL,
 }
 
